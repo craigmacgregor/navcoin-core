@@ -2497,6 +2497,9 @@ int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev, const Consensus::Para
     if(IsCommunityFundAccumulationEnabled(pindexPrev,Params().GetConsensus(), true))
         nVersion |= nCFundAccVersionMask;
 
+    if(IsStaticRewardEnabled(pindexPrev,Params().GetConsensus()))
+        nVersion |= nStaticRewardVersionMask;
+
     return nVersion;
 }
 
@@ -2872,6 +2875,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
               nStakeReward = tx.GetValueOut() - view.GetValueIn(tx);
               pindex->strDZeel = tx.strDZeel;
 
+              if(IsStaticRewardEnabled(pindex->pprev, Params().GetConsensus()) && nStakeReward != Params().GetConsensus().nStaticReward)
+              return state.DoS(100, error("ConnectBlock(): block has incorrect block reward (actual=%d vs consensus=%d)",
+                                          nStakeReward, Params().GetConsensus().nStaticReward),
+                  REJECT_INVALID, "bad-static-stake-amount");
+
               if(IsCommunityFundAccumulationEnabled(pindex->pprev, Params().GetConsensus(), false))
               {
 
@@ -2896,6 +2904,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                 return error("ConnectBlock(): CheckInputs on %s failed with %s",
                     tx.GetHash().ToString(), FormatStateMessage(state));
             control.Add(vChecks);
+        } else {
+            if (tx.nTime < block.nTime && pindex->nHeight > Params().GetConsensus().nCoinbaseTimeActivationHeight)
+                return error("ConnectBlock(): Coinbase timestamp doesn't meet protocol (tx=%d vs block=%d)",
+                             tx.nTime, block.nTime);
         }
 
         if (fAddressIndex) {
@@ -3040,8 +3052,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             return state.DoS(100, error("ConnectBlock() : coinstake pays too much(actual=%d vs calculated=%d)", nStakeReward, nCalculatedStakeReward));
     }
 
-    if (!control.Wait()){}
-    //     return state.DoS(100, false);
+    if (!control.Wait()) {
+        return state.DoS(100, false);
+    }
     int64_t nTime4 = GetTimeMicros(); nTimeVerify += nTime4 - nTime2;
     LogPrint("bench", "    - Verify %u txins: %.2fms (%.3fms/txin) [%.2fs]\n", nInputs - 1, 0.001 * (nTime4 - nTime2), nInputs <= 1 ? 0 : 0.001 * (nTime4 - nTime2) / (nInputs-1), nTimeVerify * 0.000001);
 
@@ -4316,6 +4329,18 @@ bool IsCommunityFundLocked(const CBlockIndex* pindexPrev, const Consensus::Param
     return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_COMMUNITYFUND, versionbitscache) == THRESHOLD_LOCKED_IN);
 }
 
+bool IsStaticRewardLocked(const CBlockIndex* pindexPrev, const Consensus::Params& params)
+{
+    LOCK(cs_main);
+    return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_STATIC_REWARD, versionbitscache) == THRESHOLD_LOCKED_IN);
+}
+
+bool IsStaticRewardEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
+{
+    LOCK(cs_main);
+    return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_STATIC_REWARD, versionbitscache) == THRESHOLD_ACTIVE);
+}
+
 // Compute at which vout of the block's coinbase transaction the witness
 // commitment occurs, or -1 if not found.
 static int GetWitnessCommitmentIndex(const CBlock& block)
@@ -4407,6 +4432,10 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
     if((block.nVersion & nNSyncVersionMask) != nNSyncVersionMask && IsNtpSyncEnabled(pindexPrev,Params().GetConsensus()))
         return state.Invalid(false, REJECT_OBSOLETE, strprintf("bad-version(0x%08x)", block.nVersion),
                            "rejected no nsync block");
+
+    if((block.nVersion & nStaticRewardVersionMask) != nStaticRewardVersionMask && IsStaticRewardEnabled(pindexPrev,Params().GetConsensus()))
+       return state.Invalid(false, REJECT_OBSOLETE, strprintf("bad-version(0x%08x)", block.nVersion),
+                          "rejected no static reward block");
 
     return true;
 }
@@ -5644,9 +5673,17 @@ std::string GetWarnings(const std::string& strFor)
     string strRPC;
     string strGUI;
 
-    if (!CLIENT_VERSION_IS_RELEASE) {
-        strStatusBar = "This is a pre-release test build - use at your own risk - do not use for mining or merchant applications";
-        strGUI = _("This is a pre-release test build - use at your own risk - do not use for mining or merchant applications");
+    if (!CLIENT_VERSION_IS_RELEASE)
+    {
+        strStatusBar = "This is a pre-release Test build - use at your own risk - please make sure your wallet is backed up";
+        strGUI = _("This is a pre-release Test build - use at your own risk - please make sure your wallet is backed up");
+
+        if(CLIENT_BUILD_IS_RELEASE_CANDIDATE)
+        {
+            strStatusBar = "This is a Release Candidate build - use at your own risk - please make sure your wallet is backed up";
+            strGUI = _("This is a Release Candidate build - use at your own risk - please make sure your wallet is backed up");
+        }
+
     }
 
     if (GetBoolArg("-testsafemode", DEFAULT_TESTSAFEMODE))
@@ -6081,6 +6118,28 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                   pfrom->cleanSubVer, pfrom->nVersion,
                   pfrom->nStartingHeight, addrMe.ToString(), pfrom->id,
                   remoteAddr);
+	    
+        if (mapMultiArgs.count("-banversion") > 0)
+        {
+            std::vector<std::string> vBannedVersions = mapMultiArgs["-banversion"];
+            bool fBanned = false;
+
+            for (unsigned int i = 0; i <= vBannedVersions.size(); i++)
+            {
+                if(vBannedVersions[i] == pfrom->cleanSubVer)
+                {
+                    fBanned = true;
+                    break;
+                }
+            }
+
+            if(fBanned)
+            {
+                LOCK(cs_main);
+                Misbehaving(pfrom->GetId(), 100);
+                return false;
+            }
+        }
 
         int64_t nTimeOffset = nTime - GetTime();
         pfrom->nTimeOffset = nTimeOffset;
@@ -7431,7 +7490,7 @@ bool SendMessages(CNode* pto)
                     LogPrintf("Warning: not banning local peer %s!\n", pto->addr.ToString());
                 else
                 {
-                    // CNode::Ban(pto->addr, BanReasonNodeMisbehaving);
+                    CNode::Ban(pto->addr, BanReasonNodeMisbehaving);
                 }
             }
             state.fShouldBan = false;
@@ -8315,21 +8374,28 @@ bool CheckKernel(CBlockIndex* pindexPrev, unsigned int nBits, int64_t nTime, con
 // staker's coin stake reward based on coin age spent (coin-days)
 int64_t GetProofOfStakeReward(int nHeight, int64_t nCoinAge, int64_t nFees, CBlockIndex* pindexPrev)
 {
-    int64_t nRewardCoinYear;
-    nRewardCoinYear = MAX_MINT_PROOF_OF_STAKE;
 
-    if(nHeight-1 < 7 * Params().GetConsensus().nDailyBlockCount)
-        nRewardCoinYear = 1 * MAX_MINT_PROOF_OF_STAKE;
-    else if(nHeight-1 < (365 * Params().GetConsensus().nDailyBlockCount))
-        nRewardCoinYear = 0.5 * MAX_MINT_PROOF_OF_STAKE;
-    else if(nHeight-1 < (730 * Params().GetConsensus().nDailyBlockCount))
-        nRewardCoinYear = 0.5 * MAX_MINT_PROOF_OF_STAKE;
-    else if(IsCommunityFundAccumulationEnabled(pindexPrev, Params().GetConsensus(), false))
-        nRewardCoinYear = 0.4 * MAX_MINT_PROOF_OF_STAKE;
-    else
-        nRewardCoinYear = 0.5 * MAX_MINT_PROOF_OF_STAKE;
+    int64_t nSubsidy;
 
-    int64_t nSubsidy = nCoinAge * nRewardCoinYear / 365;
+    if(IsStaticRewardEnabled(pindexPrev, Params().GetConsensus())){
+        nSubsidy = Params().GetConsensus().nStaticReward;
+    } else {
+        int64_t nRewardCoinYear;
+        nRewardCoinYear = MAX_MINT_PROOF_OF_STAKE;
+
+        if(nHeight-1 < 7 * Params().GetConsensus().nDailyBlockCount)
+            nRewardCoinYear = 1 * MAX_MINT_PROOF_OF_STAKE;
+        else if(nHeight-1 < (365 * Params().GetConsensus().nDailyBlockCount))
+            nRewardCoinYear = 0.5 * MAX_MINT_PROOF_OF_STAKE;
+        else if(nHeight-1 < (730 * Params().GetConsensus().nDailyBlockCount))
+            nRewardCoinYear = 0.5 * MAX_MINT_PROOF_OF_STAKE;
+        else if(IsCommunityFundAccumulationEnabled(pindexPrev, Params().GetConsensus(), false))
+            nRewardCoinYear = 0.4 * MAX_MINT_PROOF_OF_STAKE;
+        else
+            nRewardCoinYear = 0.5 * MAX_MINT_PROOF_OF_STAKE;
+
+         nSubsidy = nCoinAge * nRewardCoinYear / 365;
+    }
 
     return  nSubsidy + nFees;
 }
