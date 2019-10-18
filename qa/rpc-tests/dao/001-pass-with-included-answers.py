@@ -3,8 +3,7 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-import sys, os
-#include the parent folder so the test_framework is available
+import sys, os #include the parent folder so the test_framework is available
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')))
 
 from test_framework.test_framework import NavCoinTestFramework
@@ -35,9 +34,11 @@ class DAO001PassWithIncludedAnswers(NavCoinTestFramework):
 
         answers = ["A001", "A002", "A003"]
         
-        givenIHaveCreatedAConsultation(self.nodes[0], "C001", answers, True)
-        whenISupportAConsultation(self.nodes[0], "H001")
-        thenTheConsultationShouldBeSupported(self.nodes[0], "S001")
+        consultHash = givenIHaveCreatedAConsultation(self.nodes[0], "C001", answers, True)
+        # whenISupportAnswers(self.nodes[0], consultHash)
+        # whenISupportAConsultation(self.nodes[0], consultHash) 
+
+        # thenTheConsultationShouldBeSupported(self.nodes[0], "S001")
 
 
 if __name__ == '__main__':

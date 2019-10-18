@@ -11,4 +11,3 @@ from test_framework.util import *
 
 def thenTheConsultationShouldBeSupported(node, hash):
    print("thenTheConsultationShouldBeSupported")
-   print(node, hash)

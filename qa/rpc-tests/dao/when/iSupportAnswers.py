@@ -9,7 +9,7 @@
 
 from test_framework.util import *
 
-def whenISupportAConsultation(node=None, hash=None):
+def whenISupportAnswers(node=None, hash=None, answers=None):
 
   if node is None or hash is None:
     assert(False)
