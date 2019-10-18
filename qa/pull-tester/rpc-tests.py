@@ -187,12 +187,10 @@ testScripts = [
     'sendtoaddress.py',
     'stakeimmaturebalance.py',
     'rpc-help.py',
-<<<<<<< HEAD
     'dao-consultations.py',
     'dao-consultation-consensus.py'
-=======
-    'createrawscriptaddress.py'
->>>>>>> upstream/master
+    'createrawscriptaddress.py',
+    'dao/001-pass-with-included-answers.py',
 ]
 #if ENABLE_ZMQ:
 #    testScripts.append('zmq_test.py')
