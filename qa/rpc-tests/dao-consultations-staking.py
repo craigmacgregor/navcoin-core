@@ -255,9 +255,6 @@ class ConsultationsTest(NavCoinTestFramework):
                 lastblock = node.getblockcount()
                 print("Staked block at height", lastblock)
 
-        # We got one
-        # print("found a new block...")
-
         # Turn staking off
         node.staking(False)
 
