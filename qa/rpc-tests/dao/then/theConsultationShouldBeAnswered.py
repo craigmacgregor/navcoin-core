@@ -36,3 +36,5 @@ expectedAnswerHash=None):
   
   print(consult, consultAnswer)
 
+  # TODO find out how to check the outcome / result of the consultation
+

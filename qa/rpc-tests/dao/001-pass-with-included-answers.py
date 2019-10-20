@@ -64,7 +64,7 @@ class DAO001PassWithIncludedAnswers(NavCoinTestFramework):
 
       whenIEndTheVotingCycle(self.nodes[0])
 
-      slow_gen(self.nodes[0], 30) # not sure why i have to generate 30 blocks here
+      slow_gen(self.nodes[0], 30) # TODO find out why i have to generate 30 blocks here
 
       whenIEndTheVotingCycle(self.nodes[0])
       
