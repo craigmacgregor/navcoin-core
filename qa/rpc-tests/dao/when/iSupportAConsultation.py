@@ -8,22 +8,29 @@
 #
 
 from test_framework.util import *
+from dao.when.iEndTheVotingCycle import whenIEndTheVotingCycle
 
-def whenISupportAConsultation(node=None, hash=None):
+def whenISupportAConsultation(node=None,
+consultHash=None,
+endCycleBefore=False,
+endCycleAfter=False):
+  print("whenISupportAConsultation")
 
-  if node is None or hash is None:
+  if (node is None 
+  or consultHash is None):
+    print('whenISupportAConsultation: invalid parameters')
     assert(False)
 
-  blocksPerCycle = node.cfundstats()["consensus"]["blocksPerVotingCycle"]  
-  assert(isinstance(blocksPerCycle, int) and blocksPerCycle > 0)
+  if (endCycleBefore):
+    whenIEndTheVotingCycle(node)
 
-  print(node.getblockcount)
+  try:
+    node.support(consultHash)
+  except JSONRPCException as e:
+    print(e.error)
+    assert(False) 
 
-  node.support(hash)
-  slow_gen(node, blocksPerCycle)
+  slow_gen(node, 1)
 
-  print(node.getblockcount)
-
-  consult = node.getconsultation(hash)
-
-  print(consult)
+  if (endCycleAfter):
+    whenIEndTheVotingCycle(node)

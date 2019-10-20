@@ -9,9 +9,15 @@
 
 from test_framework.util import *
 
-def givenIHaveCreatedAConsultation(node=None, text=None, questions=None, withAnswers=False):
-  
-  if node is None or text is None:
+def givenIHaveCreatedAConsultation(node=None, 
+text=None, 
+questions=None, 
+withAnswers=False):
+  print("givenIHaveCreatedAConsultation")
+
+  if (node is None 
+  or text is None):
+    print('givenIHaveCreatedAConsultation: invalid parameters')
     assert(False)
 
   if questions is None:
@@ -21,7 +27,8 @@ def givenIHaveCreatedAConsultation(node=None, text=None, questions=None, withAns
       print(e.error)
       assert(False)
 
-  if withAnswers is True and questions is not None:
+  if (withAnswers is True 
+  and questions is not None):
     try:
       hash = node.createconsultationwithanswers(text, questions)["hash"]
       slow_gen(node, 1)
@@ -29,7 +36,8 @@ def givenIHaveCreatedAConsultation(node=None, text=None, questions=None, withAns
       print(e.error)
       assert(False)
   
-  if withAnswers is False and questions is not None: 
+  if (withAnswers is False 
+  and questions is not None): 
     try:
       hash = node.createconsultation(text)["hash"]
       slow_gen(node, 1)
@@ -38,8 +46,14 @@ def givenIHaveCreatedAConsultation(node=None, text=None, questions=None, withAns
       assert(False)
 
     slow_gen(node, 1)
+    
     for question in questions:
-      node.proposeanswer(hash, question)
+      try:
+        node.proposeanswer(hash, question)
+      except JSONRPCException as e:
+        print(e.error)
+        assert(False)
+
     slow_gen(node, 1)
 
   consult = node.getconsultation(hash)

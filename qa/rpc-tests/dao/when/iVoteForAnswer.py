@@ -10,31 +10,24 @@
 from test_framework.util import *
 from dao.when.iEndTheVotingCycle import whenIEndTheVotingCycle
 
-def whenISupportAnswers(
-node=None, 
+def whenIVoteForAnswer(node=None, 
 consultHash=None, 
-answersToSupport=None, 
-endCycleBefore=False, 
-endCycleAfter=False):
-  print("whenISupportAnswers")
+answerHash=None,
+ vote=None):
+  print("whenIVoteForAnswer")
 
   if (node is None 
   or consultHash is None 
-  or answersToSupport is None 
-  or answersToSupport is None 
-  or len(answersToSupport) is 0):
-    print('whenISupportAnswers: invalid parameters')
+  or answerHash is None 
+  or vote is None):
+    print('whenIVoteForAnswer: invalid parameters')
     assert(False)
 
-  if (endCycleBefore):
-    whenIEndTheVotingCycle(node)
-
-  for answerHash in answersToSupport:
-    try:
-      node.support(answerHash)
-    except JSONRPCException as e:
-      print(e.error)
-      assert(False)  
+  try:
+    node.consultationvote(answerHash, vote)
+  except JSONRPCException as e:
+    print(e.error)
+    assert(False)  
 
   slow_gen(node, 1)
 
@@ -45,10 +38,8 @@ endCycleAfter=False):
     assert(False)  
 
   for answer in consult["answers"]:
-    if (answer["hash"] in answersToSupport):
-      assert(answer["support"] > 0)
+    if (answer["hash"] == answerHash):
+      assert(answer["votes"] > 0)
     else:
-      assert(answer["support"] == 0)
+      assert(answer["votes"] == 0)
 
-  if (endCycleAfter):
-    whenIEndTheVotingCycle(node)

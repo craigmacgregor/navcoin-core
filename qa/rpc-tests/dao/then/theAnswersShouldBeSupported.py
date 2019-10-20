@@ -9,11 +9,16 @@
 
 from test_framework.util import *
 
-def thenTheConsultationShouldBeSupported(node=None, consultHash=None):
-  print("thenTheConsultationShouldBeSupported")
+def thenTheAnswersShouldBeSupported(node=None, 
+consultHash=None,
+supportedAnswers=None):
+  print("thenTheAnswersShouldBeSupported")
 
-  if node is None or consultHash is None:
-    print('thenTheConsultationShouldBeSupported: invalid parameters')
+  if (node is None 
+  or consultHash is None 
+  or supportedAnswers is None 
+  or len(supportedAnswers) is 0):
+    print('thenTheAnswersShouldBeSupported: invalid parameters')
     assert(False)
 
   try:
@@ -21,6 +26,9 @@ def thenTheConsultationShouldBeSupported(node=None, consultHash=None):
   except JSONRPCException as e:
     print(e.error)
     assert(False)  
-    
-  assert_equal(consult["state"], 7)
 
+  for answer in consult["answers"]:
+    if (answer["hash"] in supportedAnswers):
+      assert_equal(answer["state"], 1)
+    else:
+      assert_equal(answer["state"], 0)

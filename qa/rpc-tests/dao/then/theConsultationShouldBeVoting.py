@@ -9,11 +9,13 @@
 
 from test_framework.util import *
 
-def thenTheConsultationShouldBeSupported(node=None, consultHash=None):
-  print("thenTheConsultationShouldBeSupported")
+def thenTheConsultationShouldBeVoting(node=None, 
+consultHash=None):
+  print("thenTheConsultationShouldBeVoting")
 
-  if node is None or consultHash is None:
-    print('thenTheConsultationShouldBeSupported: invalid parameters')
+  if (node is None 
+  or consultHash is None):
+    print('thenTheConsultationShouldBeVoting: invalid parameters')
     assert(False)
 
   try:
@@ -22,5 +24,5 @@ def thenTheConsultationShouldBeSupported(node=None, consultHash=None):
     print(e.error)
     assert(False)  
     
-  assert_equal(consult["state"], 7)
+  assert_equal(consult["state"], 1)
 
