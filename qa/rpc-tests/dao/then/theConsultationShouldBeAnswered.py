@@ -26,7 +26,6 @@ expectedAnswerHash=None):
     print(e.error)
     assert(False)  
     
-
   assert_equal(consult["state"], 3)
 
   try:
