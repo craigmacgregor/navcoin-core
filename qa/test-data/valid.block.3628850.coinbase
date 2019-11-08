@@ -1,0 +1,42 @@
+{
+   "txid": "0ada7694ba1dfb52e459cf3459880340c4047f875189247986ba61545b295ed8",
+   "hash": "0ada7694ba1dfb52e459cf3459880340c4047f875189247986ba61545b295ed8",
+   "size": 83,
+   "vsize": 83,
+   "version": 3,
+   "locktime": 0,
+   "anon-destination": "[]",
+   "vin": [
+      {
+         "coinbase": "03325f3700",
+         "sequence": 4294967295
+      }
+   ],
+   "vout": [
+      {
+         "value": 0,
+         "valueSat": 0,
+         "n": 0,
+         "scriptPubKey": {
+            "asm": "",
+            "hex": "",
+            "type": "nonstandard"
+         }
+      },
+      {
+         "value": 0,
+         "valueSat": 0,
+         "n": 1,
+         "scriptPubKey": {
+            "asm": "OP_RETURN OP_POOL",
+            "hex": "6ad0",
+            "type": "pool_staking"
+         }
+      }
+   ],
+   "blockhash": "64693b9d964d1b338c4a92e82420096b9d1feca2105dba205e96f9699f929e1f",
+   "height": 3628850,
+   "confirmations": 1685,
+   "time": 1573137696,
+   "blocktime": 1573137696
+}

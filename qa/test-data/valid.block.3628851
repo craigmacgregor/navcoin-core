@@ -1,0 +1,23 @@
+{
+   "hash": "53c79cd433465b163dc760d3239f95edf0504d8b2a9ecc3cf76def8a77f7eddb",
+   "confirmations": 1531,
+   "strippedsize": 725,
+   "size": 725,
+   "weight": 2900,
+   "height": 3628851,
+   "version": 1899356671,
+   "versionHex": "7135e1ff",
+   "merkleroot": "2858d964b662d7f6aa4d3494eb4d866d9902ab8257f21640465b5cbdec665a9c",
+   "tx": [
+      "70f8c231969ec7c0525c9accc2af531e58b80fef91a08982c9ebb03eb24e789d",
+      "91ceb020de529b9c0613d82d05a6bdd4a6e2eed1a1a84589dcce5229858bc237"
+   ],
+   "time": 1573137728,
+   "mediantime": 1573137616,
+   "nonce": 0,
+   "bits": "1a12daf3",
+   "difficulty": 889775.6254233434,
+   "chainwork": "00000000000000000000000000000000000000000000023e8bc465b4b9d4b8ea",
+   "previousblockhash": "64693b9d964d1b338c4a92e82420096b9d1feca2105dba205e96f9699f929e1f",
+   "nextblockhash": "facb2352c17bc05384917ad17d1fc7e2980025c16bb443612baedb38ddc46059"
+}
